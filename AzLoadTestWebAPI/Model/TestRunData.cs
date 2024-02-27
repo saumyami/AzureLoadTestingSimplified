@@ -17,7 +17,7 @@ namespace AzLoadTestWebAPI.Model
         public LoadTestConfiguration? loadTestConfiguration { get; set; } = null;
 
         [JsonPropertyName("environmentVariables")]
-        public LoadTestEnvironmentVariables? loadTestEnvironmentVariables { get; set; } = null;
+        public Dictionary<string,string>? loadTestEnvironmentVariables { get; set; } = null;
 
     }
 }
