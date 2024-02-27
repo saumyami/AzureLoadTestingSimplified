@@ -10,8 +10,11 @@ namespace AzLoadTestWebAPI.Model
         [JsonPropertyName("description")]
         public string? description { get; set; } = null;
 
-        [JsonPropertyName("engineInstances")]
-        public int engineInstances { get; set; } = 1;
+        [JsonPropertyName("testId")]
+        public string? testId { get; set; } = null;
+
+        [JsonPropertyName("loadTestConfiguration")]
+        public LoadTestConfiguration? loadTestConfiguration { get; set; } = null;
 
         [JsonPropertyName("environmentVariables")]
         public LoadTestEnvironmentVariables? loadTestEnvironmentVariables { get; set; } = null;

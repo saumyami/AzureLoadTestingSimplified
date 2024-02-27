@@ -9,10 +9,10 @@ namespace AzLoadTestWebAPI.Controllers
     public class RunLoadTestController : ControllerBase
     {
         [HttpPut]
-        public async Task<string> CreateLoadTestRuns([FromBody]TestRunInput testRunArray, CreateLoadTest createLoadTest)
+        public async Task<string> CreateLoadTestRuns([FromBody]TestRunInput testRunInput, RunLoadTests createLoadTest)
         {
-            Console.WriteLine(testRunArray.ToString());
-            await createLoadTest.CreateSequential();
+            Console.WriteLine(testRunInput.ToString());
+            await createLoadTest.CreateSequential(testRunInput);
             return "Maze aa gy";
         }
     }

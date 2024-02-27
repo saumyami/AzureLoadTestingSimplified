@@ -10,7 +10,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<AzureAuthClient>();
-builder.Services.AddScoped<CreateLoadTest>();
+builder.Services.AddScoped<RunLoadTests>();
 
 var app = builder.Build();
 
