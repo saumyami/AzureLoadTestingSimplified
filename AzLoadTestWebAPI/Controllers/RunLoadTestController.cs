@@ -1,4 +1,5 @@
 ﻿using AzLoadTestWebAPI.Model;
+using AzLoadTestWebAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AzLoadTestWebAPI.Controllers
@@ -8,9 +9,10 @@ namespace AzLoadTestWebAPI.Controllers
     public class RunLoadTestController : ControllerBase
     {
         [HttpPut]
-        public string CreateLoadTestRuns([FromBody]TestRunInput testRunArray)
+        public async Task<string> CreateLoadTestRuns([FromBody]TestRunInput testRunArray, AzureAuthClient authClient, HttpClient httpClient)
         {
             Console.WriteLine(testRunArray.ToString());
+            var accessToken = await authClient.GetAccessToken(httpClient);
             return "Maze aa gy";
         }
     }
