@@ -46,16 +46,18 @@ namespace AzLoadTestWebAPI.Services
             var resContent = JsonConvert.DeserializeObject<Dictionary<string, object>>(await response.Content.ReadAsStringAsync())!;
             return JsonConvert.DeserializeObject<Dictionary<string, string>>(JsonConvert.SerializeObject(resContent["properties"]))!["dataPlaneURI"];
         }
-        public async Task CreateSequential(TestRunInput testRunInput)
+        public async Task<List<TestRunDataOutput>> CreateSequential(TestRunInput testRunInput)
         {
             await CreateAuthClient();
             azureLoadTestResouceEndpoint = await GetAzureLoadTestingDataPlaneEndpoint(testRunInput);
+            var testRunDataOutputList = new List<TestRunDataOutput>();
             try
             {
                 for(int i = 0; i< testRunInput.loadTestRuns?.ToList().Count; i++)
                 {
                     await CreateLoadTestRun(testRunInput.loadTestRuns?.ToList()[i]!);
                     bool success = false;
+                    double p90 = 0;
                     do
                     {
                         var response = await GetLoadTest();
@@ -69,15 +71,22 @@ namespace AzLoadTestWebAPI.Services
                     } 
                     while (!success);
 
+                    await Task.Delay(TimeSpan.FromMinutes(_configuration.GetValue<double>("RetryDelayTime")));
+                    var res = await GetLoadTest();
+                    var resObject = JsonConvert.DeserializeObject<Dictionary<string, object>>(res)!;
+                    var TestStats = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(resObject["testRunStatistics"]))!["Total"];
+                    p90 = (double)JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(TestStats))!["pct1ResTime"];
+
+                    var testRunOutputData = new TestRunDataOutput(testRunInput.loadTestRuns?.ToList()[i]!);
+                    testRunOutputData.result.Add("P90" , p90);
+                    testRunDataOutputList.Add(testRunOutputData);
                 }
-                
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
             }
-            
-            // Add sequential load test run code here
+            return testRunDataOutputList;
         }
 
         private async Task<string> GetLoadTest()
