@@ -4,8 +4,17 @@ namespace AzLoadTestWebAPI.Model
 {
     public class TestRunInput
     {
-        [JsonPropertyName("testData")]
-        public IEnumerable<TestRunData>? testData { get; set; } = null;
+        [JsonPropertyName("subscriptionId")]
+        public string? subscriptionId { get; set; } = null;
+
+        [JsonPropertyName("resourceGroup")]
+        public string? resourceGroup { get; set; } = null;
+
+        [JsonPropertyName("azureLoadTestingResourceName")]
+        public string? azureLoadTestingResourceName { get; set; } = null;
+
+        [JsonPropertyName("loadTestRuns")]
+        public IEnumerable<TestRunData>? loadTestRuns { get; set; } = null;
     }
 
 }

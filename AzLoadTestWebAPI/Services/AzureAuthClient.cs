@@ -6,13 +6,19 @@ namespace AzLoadTestWebAPI.Services
 {
     public class AzureAuthClient
     {
-        private string? accessToken;
-        private async Task AcquireTokenAsync(HttpClient httpclient)
-        {
+        private string? LoadTestAccessToken;
+        private string? MgmtAccessToken;
+        private readonly IConfiguration _configuration;
 
-            var clientId = "67f37fb4-955f-4254-976c-c1a20bf24607";
-            var clientSecret = "FnL8Q~ydrWAyg~aAxCPdl9WyeVYM~9F3agT5nbvY";
-            var authorityEndpoint = "https://login.microsoftonline.com/1e54ab8c-b863-4453-ba38-9339d2b282d1";
+        public AzureAuthClient(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        private async Task<Tuple<string,string>> AcquireTokenAsync()
+        {
+            var clientId = _configuration.GetSection("AADAppReg").GetValue<string>("ClientId");
+            var clientSecret = _configuration.GetSection("AADAppReg").GetValue<string>("ClientSecret");
+            var authorityEndpoint = $"{_configuration.GetSection("AADAppReg").GetValue<string>("Authority")}/{_configuration.GetSection("AADAppReg").GetValue<string>("TenantId")}";
 
             var app = ConfidentialClientApplicationBuilder
                 .Create(clientId)
@@ -20,17 +26,23 @@ namespace AzLoadTestWebAPI.Services
                 .WithAuthority(new Uri(authorityEndpoint))
                 .Build();
 
-            var scopes = new[] { "https://cnt-prod.loadtesting.azure.com/.default" };
-            var result = await app.AcquireTokenForClient(scopes).ExecuteAsync();
-            accessToken = result.AccessToken;
+            var LoadTestScopes = new[] { _configuration.GetSection("AADAppReg").GetValue<string>("LoadTestScope") };
+            var MgmtScopes = new[] { _configuration.GetSection("AADAppReg").GetValue<string>("MgmtScope") };
 
-            httpclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var LoadTestResult = await app.AcquireTokenForClient(LoadTestScopes).ExecuteAsync();
+            var MgmtResult = await app.AcquireTokenForClient(MgmtScopes).ExecuteAsync();
+
+            LoadTestAccessToken = LoadTestResult.AccessToken;
+            MgmtAccessToken = MgmtResult.AccessToken;
+
+            return new Tuple<string,string>(LoadTestAccessToken, MgmtAccessToken);
         }
 
-        public async Task<string?> GetAccessToken(HttpClient httpClient)
+        
+
+        public async Task<Tuple<string,string>> GetAccessToken()
         {
-            await AcquireTokenAsync(httpClient);
-            return accessToken;
+            return await AcquireTokenAsync();
         }
     }
 }
