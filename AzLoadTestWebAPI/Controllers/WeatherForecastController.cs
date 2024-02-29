@@ -9,7 +9,7 @@ namespace AzLoadTestWebAPI.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            "F", "B", "C", "Co", "M", "W", "B", "H", "S", "Sc"
         };
 
         private readonly ILogger<WeatherForecastController> _logger;

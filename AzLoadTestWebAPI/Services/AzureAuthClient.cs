@@ -17,7 +17,7 @@ namespace AzLoadTestWebAPI.Services
         private async Task<Tuple<string,string>> AcquireTokenAsync()
         {
             var clientId = _configuration.GetSection("AADAppReg").GetValue<string>("ClientId");
-            var clientSecret = _configuration.GetSection("AADAppReg").GetValue<string>("ClientSecret");
+            var clientSecret = _configuration.GetValue<string>("ClientSecret");
             var authorityEndpoint = $"{_configuration.GetSection("AADAppReg").GetValue<string>("Authority")}/{_configuration.GetSection("AADAppReg").GetValue<string>("TenantId")}";
 
             var app = ConfidentialClientApplicationBuilder

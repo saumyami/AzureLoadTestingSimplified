@@ -1,13 +1,7 @@
 ﻿using AzLoadTestWebAPI.Model;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.ObjectPool;
 using Newtonsoft.Json;
-using System;
 using System.Net.Http.Headers;
-using System.Net.Http;
 using System.Text;
-using System.Text.Json.Serialization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AzLoadTestWebAPI.Services
 {
@@ -24,6 +18,7 @@ namespace AzLoadTestWebAPI.Services
         public RunLoadTests(HttpClient httpClient, AzureAuthClient azureAuthClient, IConfiguration configuration) 
         {
             _httpClient = httpClient;
+            _httpClient.Timeout = TimeSpan.FromSeconds(100000);
             _loadTestAccessToken = "";
             _mgmtAccessToken = "";
             _configuration = configuration;
@@ -51,8 +46,7 @@ namespace AzLoadTestWebAPI.Services
             await CreateAuthClient();
             azureLoadTestResouceEndpoint = await GetAzureLoadTestingDataPlaneEndpoint(testRunInput);
             var testRunDataOutputList = new List<TestRunDataOutput>();
-            try
-            {
+            
                 for(int i = 0; i< testRunInput.loadTestRuns?.ToList().Count; i++)
                 {
                     await CreateLoadTestRun(testRunInput.loadTestRuns?.ToList()[i]!);
@@ -74,6 +68,12 @@ namespace AzLoadTestWebAPI.Services
                     await Task.Delay(TimeSpan.FromMinutes(_configuration.GetValue<double>("RetryDelayTime")));
                     var res = await GetLoadTest();
                     var resObject = JsonConvert.DeserializeObject<Dictionary<string, object>>(res)!;
+                    while (!resObject.ContainsKey("testRunStatistics"))
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(_configuration.GetValue<double>("RetryDelayTime")));
+                        res = await GetLoadTest();
+                        resObject = JsonConvert.DeserializeObject<Dictionary<string, object>>(res)!;
+                    }
                     var TestStats = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(resObject["testRunStatistics"]))!["Total"];
                     p90 = (double)JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(TestStats))!["pct1ResTime"];
 
@@ -81,11 +81,6 @@ namespace AzLoadTestWebAPI.Services
                     testRunOutputData.result.Add("P90" , p90);
                     testRunDataOutputList.Add(testRunOutputData);
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
             return testRunDataOutputList;
         }
 
@@ -111,26 +106,18 @@ namespace AzLoadTestWebAPI.Services
                 Content = httpContent
             };
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _loadTestAccessToken);
-            try
-            {
-                HttpResponseMessage response = await _httpClient.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string resContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"response: {resContent}");
-                }
-                else
-                {
-                    Console.WriteLine($"{response.StatusCode}");
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine($"Fail ho gya bhaiya {ex.ToString()}");
-                throw ex;
-            }
             
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                string resContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"response: {resContent}");
+            }
+            else
+            {
+                Console.WriteLine($"{response.StatusCode}");
+            }
+
         }
     }
 }
