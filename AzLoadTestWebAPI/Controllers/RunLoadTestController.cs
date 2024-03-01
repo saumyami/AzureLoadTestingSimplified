@@ -19,4 +19,21 @@ namespace AzLoadTestWebAPI.Controllers
             return Ok(testRunOutput);
         }
     }
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class RunSingleLoadTestController : ControllerBase
+    {
+        [HttpPut]
+        public async Task<IActionResult> CreateLoadTestRuns([FromBody] TestRunData testRundata, [FromHeader] string subscriptionId, [FromHeader] string resourceGroupName, [FromHeader] string azureLoadTestingResourceName, RunLoadTests createLoadTest)
+        {
+            Console.WriteLine(testRundata.ToString());
+            await createLoadTest.CreateAuthClient();
+            createLoadTest.azureLoadTestResouceEndpoint = await createLoadTest.GetAzureLoadTestingDataPlaneEndpoint(subscriptionId, resourceGroupName, azureLoadTestingResourceName);
+            var testDataOutput = await createLoadTest.CreateSequentialSingleRun(testRundata);
+            return Ok(testDataOutput);
+        }
+    }
+
+    
 }
